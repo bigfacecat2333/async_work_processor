@@ -12,17 +12,17 @@ func init() {
 	InitClient()
 }
 
-//InitClient func for Init client
+// InitClient func for Init client
 func InitClient() {
 	tr := &http.Transport{
 		MaxIdleConns:        600,
 		MaxIdleConnsPerHost: 600,
-		IdleConnTimeout:     10 * time.Second,
+		IdleConnTimeout:     10 * time.Second, // 10s超时
 	}
-	TaskClient = &http.Client{Timeout: 10 * time.Second, Transport: tr}
+	TaskClient = &http.Client{Timeout: 10 * time.Second, Transport: tr} // 10s超时
 }
 
-//GetTodayTime func get today timestamp
+// GetTodayTime func get today timestamp
 func GetTodayTime() int64 {
 	var now = time.Now()
 	return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()).Unix()

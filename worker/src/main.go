@@ -16,12 +16,17 @@ func main() {
 		TaskType: "lark",
 		NewProc:  func() tasksdk.TaskIntf { return new(LarkTask) },
 	}
+	// 放入数据结构中 key为taskType value为TaskHandler
 	tasksdk.RegisterHandler(&larkTask)
-	initialise.InitResource()
+	err := initialise.InitResource()
+	if err != nil {
+		return
+	}
 	tasksdk.InitSvr("http://127.0.0.1:41555", "")
 	var taskMgr = tasksdk.TaskMgr{
 		TaskType: "lark",
 	}
+	// 在协程注册taskMgr任务，然后调用Schedule()方法
 	taskMgr.Schedule()
 }
 

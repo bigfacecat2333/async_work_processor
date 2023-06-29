@@ -6,6 +6,7 @@ import (
 
 // CreateTaskReq 请求消息
 type CreateTaskReq struct {
+	// 'json:"taskType"' 是一个标签，用于在序列化和反序列化时记录字段的名称。
 	TaskData TaskData `json:"taskData"`
 }
 

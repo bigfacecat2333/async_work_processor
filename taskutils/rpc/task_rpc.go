@@ -10,12 +10,12 @@ import (
 	"net/http"
 )
 
-//TaskRpc struct TaskRpc
+// TaskRpc struct TaskRpc
 type TaskRpc struct {
 	Host string
 }
 
-//CreateTask func CreateTask
+// CreateTask func CreateTask
 func (p *TaskRpc) CreateTask(reqBody *model.CreateTaskReq) (
 	*model.CreateTaskResp, error) {
 
@@ -60,7 +60,7 @@ func sendRequest(client *http.Client, method, host, urlSuffix string, queryStrDi
 
 }
 
-//SetTask func SetTask
+// SetTask func SetTask
 func (p *TaskRpc) SetTask(reqBody *model.SetTaskReq) (
 	*model.SetTaskResp, error) {
 	var respData = &model.SetTaskResp{}
@@ -80,7 +80,7 @@ func (p *TaskRpc) SetTask(reqBody *model.SetTaskReq) (
 	return respData, nil
 }
 
-//HoldTasks func for hold tasks
+// HoldTasks func for hold tasks
 func (p *TaskRpc) HoldTasks(reqBody *model.HoldTasksReq) (*model.HoldTasksResp, error) {
 	var queryStrDic = map[string]string{
 		"taskType": reqBody.TaskType,
@@ -100,7 +100,7 @@ func (p *TaskRpc) HoldTasks(reqBody *model.HoldTasksReq) (*model.HoldTasksResp, 
 	return respData, nil
 }
 
-//GetTaskList func GetTaskList
+// GetTaskList func GetTaskList
 func (p *TaskRpc) GetTaskList(reqBody *model.GetTaskListReq) (*model.GetTaskListResp, error) {
 	var queryStrDic = map[string]string{
 		"taskType": reqBody.TaskType,
@@ -121,7 +121,7 @@ func (p *TaskRpc) GetTaskList(reqBody *model.GetTaskListReq) (*model.GetTaskList
 	return respData, nil
 }
 
-//GetTask func GetTask
+// GetTask func GetTask
 func (p *TaskRpc) GetTask(reqBody *model.GetTaskReq) (*model.GetTaskResp, error) {
 	var queryStrDic = map[string]string{
 		"taskId": reqBody.TaskId,
@@ -140,7 +140,8 @@ func (p *TaskRpc) GetTask(reqBody *model.GetTaskReq) (*model.GetTaskResp, error)
 	return respData, nil
 }
 
-//GetTaskScheduleCfgList func GetTaskScheduleCfgList
+// GetTaskScheduleCfgList func GetTaskScheduleCfgList
+// 这里需要每隔一段时间去获取一次，因为可能会有新的任务加入
 func (p *TaskRpc) GetTaskScheduleCfgList() (*model.GetTaskScheduleCfgListResp, error) {
 	var trigger = tools.HttpTrigger{
 		Method: http.MethodGet,

@@ -44,6 +44,7 @@ func (p *TaskPos) Save(db *gorm.DB, task *TaskPos) error {
 // GetTaskPos 获取记录
 func (p *TaskPos) GetTaskPos(db *gorm.DB, taskSetName string) (*TaskPos, error) {
 	var taskPos = new(TaskPos)
+	// 通过任务类型获取任务位置信息 (本质上是一段SQL语句)
 	err := db.Table(p.TableName()).Where("task_type = ?", taskSetName).First(&taskPos).Error
 	if err != nil {
 		return nil, err

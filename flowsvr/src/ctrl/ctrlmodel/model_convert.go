@@ -12,7 +12,7 @@ import (
  * @return error 错误信息
  */
 
-// Fill db Task
+// FillTaskModel Fill db Task
 func FillTaskModel(sTask *model.TaskData, task *db.Task, scheduleEndPosStr string) error {
 	task.UserId = sTask.UserId
 	if sTask.TaskId == "" {

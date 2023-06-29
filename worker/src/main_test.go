@@ -17,6 +17,7 @@ func TestCreateTask(t *testing.T) {
 	config.Init()
 	db.InitDB()
 	fmt.Println("aaa   ************* ")
+	// convey的功能是将测试用例的描述信息与测试用例的执行结果关联起来，从而更加直观的展示测试结果
 	convey.Convey("TestCreateTask", t, func() {
 		// case 1: input err
 		var rpc rpc.TaskRpc
@@ -35,6 +36,5 @@ func TestCreateTask(t *testing.T) {
 		fmt.Println(tools.GetFmtStr(resp))
 		fmt.Println(err)
 		convey.So(err, convey.ShouldBeNil)
-
 	})
 }

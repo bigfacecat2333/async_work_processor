@@ -54,7 +54,7 @@ type TaskConfig struct {
 	MaxProcessTime      int64 `toml:"max_process_time"`
 }
 
-// LoadConfig 导入配置
+// LoadConfig 导入配置  toml导入
 func (c *TomlConfig) LoadConfig(env string) {
 	if env == "" {
 		env = "test"
@@ -83,6 +83,7 @@ func GetConfEnv() string {
 	usage := "./main {$env} "
 
 	env := os.Getenv("ENV")
+	// os.Args == "test"
 	if env == "" {
 		if len(os.Args) < 2 {
 			fmt.Println("not enough params, usage:  ", usage)

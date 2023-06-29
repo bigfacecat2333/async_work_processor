@@ -9,8 +9,15 @@ import (
 	"github.com/niuniumart/gosdk/martlog"
 )
 
+// flowsvr:
+// 1. 读取配置文件
+// 2. 初始化资源，主要是MySQL连接
+// 3. 创建一个web服务 (gin)
+// 4. 注册路由，包括CreateTask,HoldTasks,GetTaskList,GetTaskScheduleCfgList,GetTask,SetTask... 等待worker调用
+// 5. 启动web server，这一步之后这个主协程启动会阻塞在这里，请求可以通过gin的子协程进来
+
 func main() {
-	// 初始化配置
+	// 初始化配置 主要是读取配置文件
 	config.Init()
 	// 初始资源，主要是MySQL连接
 	err := initialize.InitResource()

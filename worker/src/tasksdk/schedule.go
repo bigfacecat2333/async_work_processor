@@ -27,12 +27,12 @@ const (
 
 var taskSvrHost, lockSvrHost string //new is host: for example http://127.0.0.1:41555
 
-//InitSvr task svr host
+// InitSvr task svr host
 func InitSvr(taskServerHost, lockServerHost string) {
 	taskSvrHost, lockSvrHost = taskServerHost, lockServerHost
 }
 
-//TaskMgr struct short task mgr
+// TaskMgr struct short task mgr
 type TaskMgr struct {
 	InternelTime  time.Duration
 	TaskType      string
@@ -50,21 +50,26 @@ func init() {
 	scheduleCfgDic = make(map[string]*model.TaskScheduleCfg, 0)
 }
 
-//CycleReloadCfg func cycle reload cfg
+// CycleReloadCfg func cycle reload cfg 在固定时间间隔后刷新配置
 func CycleReloadCfg() {
 	for {
 		now := time.Now()
 		internelTime := time.Second * DEFAULT_TIME_INTERVAL
-		next := now.Add(internelTime)
+		next := now.Add(internelTime) // 计算下一次刷新配置的时间
 		martlog.Infof("schedule load cfg")
-		sub := next.Sub(now)
-		t := time.NewTimer(sub)
-		<-t.C
-		LoadCfg()
+		sub := next.Sub(now)    // 这个时间差表示需要等待的时间
+		t := time.NewTimer(sub) // 创建一个计时器t，其持续时间为sub。计时器将在指定的时间间隔后触发
+		<-t.C                   // 阻塞，等待计时器触发
+		if err := LoadCfg(); err != nil {
+			msg := "load task cfg schedule err" + err.Error()
+			martlog.Errorf(msg)
+			fmt.Println(msg)
+			os.Exit(1)
+		}
 	}
 }
 
-//LoadCfg func load cfg
+// LoadCfg func load cfg
 func LoadCfg() error {
 	cfgList, err := taskRpc.GetTaskScheduleCfgList()
 	if err != nil {
@@ -77,29 +82,38 @@ func LoadCfg() error {
 	return nil
 }
 
-//Schedule func schedule
+// Schedule func schedule
 func (p *TaskMgr) Schedule() {
 	taskRpc.Host = taskSvrHost
+	// once.Do 保证只执行一次 加载配置 以及 启动定时器（协程）用来定时刷新配置
 	once.Do(func() {
 		// 初始化
+		// 如果配置了ScheduleLimit，则使用配置的值
 		if p.ScheduleLimit != 0 {
 			martlog.Infof("init ScheduleLimit : %d", p.ScheduleLimit)
 			concurrentRunTimes = p.ScheduleLimit
 			MaxConcurrentRunTimes = p.ScheduleLimit
 		}
+		// 加载配置 主要是RPC调用需要的上下文
 		if err := LoadCfg(); err != nil {
 			msg := "load task cfg schedule err" + err.Error()
 			martlog.Errorf(msg)
 			fmt.Println(msg)
 			os.Exit(1)
 		}
+		// 启动定时器（协程）用来定时刷新配置
 		go func() {
-			CycleReloadCfg()
+			CycleReloadCfg() // 改的就是scheduleCfgDic
 		}()
 	})
 	rand.Seed(time.Now().Unix())
+	// 和mapreduce一样的处理方式
 	for {
-		cfg, ok := scheduleCfgDic[p.TaskType]
+		// 主线程的工作：
+		// 1. 根据任务类型，从scheduleCfgDic获取任务配置
+		// 2. 根据任务配置，计算出下一次执行任务的时间
+		// 3. 开辟一个协程，process()，处理任务
+		cfg, ok := scheduleCfgDic[p.TaskType] // 最开始是lark
 		if !ok {
 			martlog.Errorf("scheduleCfgDic %s, not have taskType %s", tools.GetFmtStr(scheduleCfgDic), p.TaskType)
 			return
@@ -114,23 +128,27 @@ func (p *TaskMgr) Schedule() {
 		martlog.Infof("taskType %s internelTime %v", p.TaskType, internelTime)
 		fmt.Printf("taskType %s internelTime %v \n", p.TaskType, internelTime)
 		t := time.NewTimer(internelTime)
-		<-t.C
+		<-t.C // 等待波动的500ms + cfg.ScheduleInterval
 		martlog.Infof("schedule run %s task", p.TaskType)
-		go func() {
-			defer func() {
-				if err := recover(); err != nil {
-					martlog.Errorf("In PanicRecover,Error:%s", err)
-					//打印调用栈信息
-					debug.PrintStack()
-					buf := make([]byte, 2048)
-					n := runtime.Stack(buf, false)
-					stackInfo := fmt.Sprintf("%s", buf[:n])
-					martlog.Errorf("panic stack info %s\n", stackInfo)
-				}
-			}()
-			p.schedule()
-		}()
+		go p.process()
 	}
+}
+
+func (p *TaskMgr) process() {
+	// defer 常见的场景： recover panic， close file， release lock， print log
+	defer func() {
+		// 检查是否有panic
+		if err := recover(); err != nil {
+			martlog.Errorf("In PanicRecover,Error:%s", err)
+			//打印调用栈信息
+			debug.PrintStack()
+			buf := make([]byte, 2048)
+			n := runtime.Stack(buf, false)
+			stackInfo := fmt.Sprintf("%s", buf[:n])
+			martlog.Errorf("panic stack info %s\n", stackInfo)
+		}
+	}()
+	p.schedule()
 }
 
 // 调度逻辑所在
@@ -146,10 +164,12 @@ func (p *TaskMgr) schedule() {
 			martlog.Errorf("panic stack info %s\n", stackInfo)
 		}
 	}()
-	// 这里是开始抢任务，分布式锁也应该加这里
+	// 这里是开始抢任务，分布式锁也应该加这里（redis lock）
 	martlog.Infof("Start hold")
-	// 占据一批任务
+	// 占据一批任务 hold()
+	// redis.lock()
 	taskIntfList, err := p.hold()
+	// redis.unlock()
 	if err != nil {
 		martlog.Errorf("p.hold err %s", err.Error())
 		return
@@ -340,7 +360,7 @@ func run(taskInterface TaskIntf, cfg *model.TaskScheduleCfg) {
 	}
 }
 
-//RandNum func for rand num
+// RandNum func for rand num
 func RandNum(num int64) int64 {
 	step := rand.Int63n(num) + int64(1)
 	flag := rand.Int63n(2)
