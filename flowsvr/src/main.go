@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/niuniumart/asyncflow/flowsvr/src/config"
-	"github.com/niuniumart/asyncflow/flowsvr/src/initialize"
+	"github.com/bigfacecat2333/async_work_processor/flowsvr/src/config"
+	"github.com/bigfacecat2333/async_work_processor/flowsvr/src/initialize"
 	"github.com/niuniumart/gosdk/gin"
 
 	"github.com/niuniumart/gosdk/martlog"

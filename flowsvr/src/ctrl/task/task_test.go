@@ -2,11 +2,11 @@ package task
 
 import (
 	"fmt"
-	"github.com/niuniumart/asyncflow/flowsvr/src/config"
-	"github.com/niuniumart/asyncflow/taskutils/rpc/model"
+	"github.com/bigfacecat2333/async_work_processor/flowsvr/src/config"
+	"github.com/bigfacecat2333/async_work_processor/taskutils/rpc/model"
 	"testing"
 
-	"github.com/niuniumart/asyncflow/flowsvr/src/db"
+	"github.com/bigfacecat2333/async_work_processor/flowsvr/src/db"
 
 	"github.com/smartystreets/goconvey/convey"
 

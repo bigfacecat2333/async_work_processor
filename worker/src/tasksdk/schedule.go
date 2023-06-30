@@ -4,9 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/niuniumart/asyncflow/taskutils/constant"
-	"github.com/niuniumart/asyncflow/taskutils/rpc"
-	"github.com/niuniumart/asyncflow/taskutils/rpc/model"
+
+	"github.com/bigfacecat2333/async_work_processor/taskutils/constant"
+	"github.com/bigfacecat2333/async_work_processor/taskutils/rpc"
+	"github.com/bigfacecat2333/async_work_processor/taskutils/rpc/model"
 	"github.com/niuniumart/gosdk/martlog"
 	"github.com/niuniumart/gosdk/tools"
 	"math/rand"
@@ -168,7 +169,7 @@ func (p *TaskMgr) schedule() {
 	martlog.Infof("Start hold")
 	// 占据一批任务 hold()
 	// redis.lock()
-	taskIntfList, err := p.hold()
+	taskIntfList, err := p.hold() // 获得一批任务, p里面有taskType, 只取这个类型的任务(RPC调用)
 	// redis.unlock()
 	if err != nil {
 		martlog.Errorf("p.hold err %s", err.Error())
@@ -186,7 +187,7 @@ func (p *TaskMgr) schedule() {
 		return
 	}
 	martlog.Infof("will do %d num task", len(taskIntfList))
-	// 并发执行每个任务
+	// 并发执行每个任务 hold之后得到的是一批任务  这个可以用线程池来做
 	for _, taskIntf := range taskIntfList {
 		taskInterface := taskIntf
 		go func() {
@@ -225,7 +226,7 @@ func (p *TaskMgr) hold() ([]TaskIntf, error) {
 	// 构造拉取任务列表的请求，其中拉取多少个，由cfg中的ScheduleLimit决定
 	var reqBody = &model.HoldTasksReq{
 		TaskType: p.TaskType,
-		Limit:    cfg.ScheduleLimit,
+		Limit:    cfg.ScheduleLimit, // SQL中已经配置好
 	}
 	/**** Step2:调用http请求，从flowsvr拉任务 ****/
 	rpcTaskResp, err := taskRpc.HoldTasks(reqBody)

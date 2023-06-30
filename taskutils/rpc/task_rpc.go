@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/niuniumart/asyncflow/taskutils/rpc/model"
+	"github.com/bigfacecat2333/async_work_processor/taskutils/rpc/model"
 	"github.com/niuniumart/gosdk/martlog"
 	"github.com/niuniumart/gosdk/tools"
 	"net/http"
@@ -43,6 +43,7 @@ func sendRequest(client *http.Client, method, host, urlSuffix string, queryStrDi
 		Method: method,
 		Url:    fmt.Sprintf("%s%s", host, urlSuffix),
 	}
+	// 通过http调用RPC
 	respStr, err := trigger.SendJsonRequest(TaskClient, queryStrDic, headerDic, reqBody)
 	if err != nil {
 		errMsg := fmt.Sprintf("trigger.SendJsonRequest, [err:%s]", err)
@@ -57,7 +58,6 @@ func sendRequest(client *http.Client, method, host, urlSuffix string, queryStrDi
 		}
 	}
 	return nil
-
 }
 
 // SetTask func SetTask

@@ -1,4 +1,4 @@
-module github.com/niuniumart/asyncflow
+module github.com/bigfacecat2333/async_work_processor
 
 go 1.16
 

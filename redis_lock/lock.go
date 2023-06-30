@@ -12,6 +12,13 @@ import (
 	"time"
 )
 
+// 知识点：
+// uuid设置value
+// 自动续约
+// 加锁重试  引入上下文
+// singleflight 在非常高并发的情况下，可以减少对redis的压力，原理：部分goroutine自己先竞争一把锁，然后胜利者去redis抢锁
+// 主从切换 RedLock
+
 var (
 	//go:embed script/lua/unlock.lua
 	luaUnlock string
@@ -66,23 +73,26 @@ func NewClient(client redis.Cmdable) *Client {
 	}
 }
 
+// SingleflightLock 是对 Lock 的封装，使用 singleflight 来减少对 Redis 的压力
 func (c *Client) SingleflightLock(ctx context.Context, key string, expiration time.Duration, retry RetryStrategy, timeout time.Duration) (*Lock, error) {
 	for {
-		flag := false
+		flag := false // 标记自己是不是拿到了锁
+		// DoChan 方法会返回一个 chan singleflight.Result
+		// DoChan只让一个goroutine去实际调用这个函数，等到这个goroutine返回结果的时候，再把结果返回给其他几个同时调用了相同函数的goroutine
 		result := c.g.DoChan(key, func() (interface{}, error) {
-			flag = true
+			flag = true // 标记自己拿到了锁
 			return c.Lock(ctx, key, expiration, retry, timeout)
 		})
 		select {
-		case res := <-result:
+		case res := <-result: // 表示已经有一个goroutine拿到了锁
 			if flag {
-				c.g.Forget(key)
+				c.g.Forget(key) // 如果自己拿到了锁，那么就忘记这个key，这样其他goroutine就不会再去抢锁了
 				if res.Err != nil {
 					return nil, res.Err
 				}
 				return res.Val.(*Lock), nil
 			}
-		case <-ctx.Done():
+		case <-ctx.Done(): // 超时
 			return nil, ctx.Err()
 		}
 	}

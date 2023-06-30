@@ -3,9 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/niuniumart/asyncflow/taskutils/constant"
-	"github.com/niuniumart/asyncflow/worker/src/initialise"
-	"github.com/niuniumart/asyncflow/worker/src/tasksdk"
+	"github.com/bigfacecat2333/async_work_processor/taskutils/constant"
+	"github.com/bigfacecat2333/async_work_processor/worker/src/initialise"
+	"github.com/bigfacecat2333/async_work_processor/worker/src/tasksdk"
 	"github.com/niuniumart/gosdk/martlog"
 	"github.com/niuniumart/gosdk/response"
 	"github.com/niuniumart/gosdk/tools"
