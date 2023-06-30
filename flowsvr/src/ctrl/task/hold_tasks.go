@@ -42,7 +42,10 @@ func HoldTasks(c *gin.Context) {
 		return
 	}
 	martlog.Infof("HoldTasks hd.Req %s", tools.GetFmtStr(hd.Req))
-	handler.Run(&hd)
+	err := handler.Run(&hd) // HandleInput -> HandleProcess
+	if err != nil {
+		return
+	}
 }
 
 // HandleInput 参数检查
@@ -87,6 +90,7 @@ func (p *HoldTasksHandler) HandleProcess() error {
 		taskIdList = append(taskIdList, dbTask.TaskId)
 	}
 	if len(taskIdList) != 0 {
+		// 批量更新任务状态为处理中
 		err = db.TaskNsp.BatchSetStatus(db.DB, taskIdList, db.TASK_STATUS_PROCESSING)
 		if err != nil {
 			martlog.Errorf("BatchSetStatus err %s", err.Error())

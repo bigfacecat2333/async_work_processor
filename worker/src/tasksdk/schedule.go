@@ -180,7 +180,7 @@ func (p *TaskMgr) schedule() {
 		martlog.Infof("no task to deal")
 		return
 	}
-	// 获取这个任务类型的配置
+	// 获取这个任务类型的配置 其实就是SQL里的字段
 	cfg, ok := scheduleCfgDic[p.TaskType]
 	if !ok {
 		martlog.Errorf("scheduleCfgDic %s, not have taskType %s", tools.GetFmtStr(scheduleCfgDic), p.TaskType)
@@ -229,6 +229,9 @@ func (p *TaskMgr) hold() ([]TaskIntf, error) {
 		Limit:    cfg.ScheduleLimit, // SQL中已经配置好
 	}
 	/**** Step2:调用http请求，从flowsvr拉任务 ****/
+	// 调用http请求访问flowsvr，占据任务，这里调用的是hold_task接口，
+	// flowsvr做的事情大概就是拉取一批任务，并批量设置他们为执行中 BatchSetStatus
+	// 详见\async_work_processor\flowsvr\src\ctrl\task\hold_tasks.go
 	rpcTaskResp, err := taskRpc.HoldTasks(reqBody)
 	if err != nil {
 		martlog.Errorf("taskRpc.GetTaskList %s", err.Error())
@@ -272,6 +275,8 @@ func (p *TaskMgr) hold() ([]TaskIntf, error) {
 func run(taskInterface TaskIntf, cfg *model.TaskScheduleCfg) {
 	martlog.Infof("Start run taskId %s... ", taskInterface.Base().TaskId)
 	// defer函数会在当前函数结束时调用，用来更新Task状态，以及做一些异常处理
+	// defer函数，run函数结尾会调用，主要用来向flowsvr发送请求更新数据库，
+	// 其次做了一些异常收尾，收尾不是重点
 	defer func() {
 		// 如果任务失败了
 		if taskInterface.Base().Status == int(constant.TASK_STATUS_FAILED) {
@@ -311,7 +316,7 @@ func run(taskInterface TaskIntf, cfg *model.TaskScheduleCfg) {
 		martlog.Infof("End run. releaseProcessRight")
 	}()
 	// 加载任务上下文
-	err := taskInterface.ContextLoad()
+	err := taskInterface.ContextLoad() // Unmarshal
 	if err != nil {
 		martlog.Errorf("taskid %s reload err %s", taskInterface.Base().TaskId, err.Error())
 		taskInterface.Base().Status = int(constant.TASK_STATUS_PENDING)
